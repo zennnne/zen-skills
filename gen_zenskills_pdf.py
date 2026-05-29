@@ -961,20 +961,6 @@ def build_install_page():
     items.append(Paragraph('การติดตั้ง zen-skills', STYLES['h1']))
     items.append(HRFlowable(width=CW, thickness=2, color=C['blue'], spaceAfter=12))
 
-    # Note
-    note = Table([[Paragraph(
-        me('⚠️  ') + '<b>หมายเหตุ:</b> zen-skills เป็น private repo — ต้องทำ <b>gh auth login</b> ก่อนนะ',
-        ParagraphStyle('nt', fontName='TH', fontSize=10.5, leading=16, textColor=colors.HexColor('#7B341E'))
-    )]], colWidths=[CW])
-    note.setStyle(TableStyle([
-        ('BACKGROUND', (0,0),(-1,-1), colors.HexColor('#FFF8E1')),
-        ('BOX', (0,0),(-1,-1), 1.5, colors.HexColor('#F9A825')),
-        ('TOPPADDING', (0,0),(-1,-1), 10), ('BOTTOMPADDING', (0,0),(-1,-1), 10),
-        ('LEFTPADDING', (0,0),(-1,-1), 14), ('RIGHTPADDING', (0,0),(-1,-1), 14),
-    ]))
-    items.append(note)
-    items.append(Spacer(1, 10))
-
     steps = [
         ('1', 'เพิ่ม marketplace', '/plugin marketplace add zennnne/zen-skills'),
         ('2', 'ติดตั้ง plugin',   '/plugin install zen-skills@zen-skills'),
