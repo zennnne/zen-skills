@@ -1,11 +1,24 @@
 ---
 name: wahahaha
-description: New machine onboarding wizard. Walks through setting up session logging and installing recommended external plugins one by one. Run once after installing zen-skills on a new machine.
+description: New machine onboarding wizard. Introduces zen-skills PDF catalogs, sets up session logging, installs recommended external plugins one by one, verifies everything, then self-destructs by deleting itself and /setup-session-log. Run once after installing zen-skills on a new machine.
 ---
 
 # Wahahaha — Onboarding Wizard
 
-Welcome setup wizard for a new machine. Walk the user through each component interactively, asking before doing anything.
+One-time setup wizard for a new machine. Walk the user through each step interactively, asking before doing anything. After completion, this skill deletes itself.
+
+## Step 0 — แนะนำ PDF Catalogs
+
+ก่อนเริ่ม แนะนำ reference materials ให้ user รู้จักก่อน:
+
+> "สวัสดีค่ะ! ก่อนเริ่ม onboarding มี catalog ให้อ่านประกอบได้เลยนะคะ:
+>
+> 📖 **zen-skills-catalog.pdf** — รวม skills ทั้งหมด พร้อม tier rating, วิธีใช้ และ career tags (ดาวน์โหลดได้จาก repo)
+> 📋 **zen-session_log-detail.pdf** — รายละเอียด session log system
+>
+> ถ้างงตรงไหนระหว่าง setup เปิดดู PDF ได้เลยค่ะ เริ่มกันเลยนะคะ!"
+
+จากนั้นดำเนินการ Step 1 ต่อได้เลย ไม่ต้องรอ user ตอบ
 
 ## Step 1 — Session log system
 
@@ -84,6 +97,30 @@ Then for each plugin below **that is NOT already in enabledPlugins**, ask the us
 
 ---
 
-## Step 3 — Summary
+## Step 3 — Verification
 
-After all steps, show a summary of what was installed and what was skipped. If any manual steps are needed, list them clearly at the end.
+หลังติดตั้ง plugins ทุกตัวแล้ว ตรวจสอบ:
+
+1. อ่าน `~/.claude/settings.json` อีกครั้ง ตรวจว่า `enabledPlugins` มี plugins ที่ user เลือกครบ
+2. ถ้า session log ถูกติดตั้ง ตรวจว่า hook `SessionStop` มีอยู่ใน `settings.json`
+3. แจ้ง user ถ้าพบปัญหา หรือมี manual step ที่ยังค้างอยู่
+
+## Step 4 — Summary
+
+แสดง summary สั้นๆ ว่าติดตั้งอะไรไปแล้ว และ skip อะไรบ้าง ถ้ามี manual step ค้างให้แสดง list ชัดเจน
+
+## Step 5 — Self-destruct
+
+หลัง summary เสร็จ แจ้ง user และขอยืนยันก่อน:
+
+> "Onboarding เสร็จแล้วค่ะ! /wahahaha และ /setup-session-log เป็น one-time tools จะลบตัวเองออกเพื่อ keep skills ให้ clean
+> ยืนยันลบไหมคะ? (ใช่/ไม่)"
+
+- **ใช่** →
+  1. หา skill folders ใน paths ต่อไปนี้แล้วลบ:
+     - `~/.claude/skills/wahahaha/`
+     - `~/.claude/skills/setup-session-log/`
+     - `~/.claude/plugins/*/skills/wahahaha/` (ถ้ามี)
+     - `~/.claude/plugins/*/skills/setup-session-log/` (ถ้ามี)
+  2. แจ้ง user: "ลบแล้วค่ะ! Restart Claude Code เพื่อให้ changes มีผลนะคะ ✨"
+- **ไม่** → skip, จบ wizard ตามปกติ

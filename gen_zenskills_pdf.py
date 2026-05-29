@@ -463,8 +463,8 @@ SKILLS = {
     dict(
       name='wahahaha', tier='A', type_emoji='🔧', type_name='Utility',
       cmd='/wahahaha',
-      what='Wizard ตั้งค่าทุกอย่างในครั้งเดียว — ถามทีละ plugin ว่าอยากได้ไหม ตอบใช่/ไม่แล้วมันจัดการให้หมดเลย ไม่ต้องจำคำสั่ง install เอง ใช้ครั้งเดียวพอต่อเครื่อง',
-      how_to_use='รัน /wahahaha ทันทีหลัง install zen-skills — มันจะถามทีละตัว: session log, karpathy, mattpocock, document-skills, 9arm ตอบใช่/ไม่ทีละอัน',
+      what='One-time onboarding wizard 5 ขั้นตอน: แนะนำ PDF catalogs > ถาม session log > ลง plugins ทีละตัว > verify > ลบตัวเองและ /setup-session-log ออกเมื่อเสร็จ ใช้ครั้งเดียวพอต่อเครื่อง',
+      how_to_use='รัน /wahahaha ทันทีหลัง install zen-skills — จะแนะนำ zen-skills-catalog.pdf และ zen-session_log-detail.pdf ก่อน แล้วถามทีละขั้น ตอบใช่/ไม่ จบแล้ว wizard ลบตัวเองออก',
       when='ครั้งแรกบนเครื่องใหม่หรือหลัง format — ประหยัดเวลาแทนที่จะจำคำสั่ง /plugin install ทั้งหมด',
       careers='Everyone',
     ),
