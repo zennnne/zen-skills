@@ -17,6 +17,12 @@ import datetime
 
 pdfmetrics.registerFont(TTFont('TH',    r'C:\Windows\Fonts\leelawad.ttf'))
 pdfmetrics.registerFont(TTFont('Emoji', r'C:\Windows\Fonts\seguiemj.ttf'))
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
+try:
+    pdfmetrics.registerFont(TTFont('TH-Bold', r'C:\Windows\Fonts\leelawadbd.ttf'))
+    registerFontFamily('TH', normal='TH', bold='TH-Bold', italic='TH', boldItalic='TH-Bold')
+except Exception:
+    registerFontFamily('TH', normal='TH', bold='TH', italic='TH', boldItalic='TH')
 
 def me(text):
     result, in_emoji = [], False
@@ -82,7 +88,7 @@ ST = {
     'body':    S('bd', fontSize=10, leading=15, textColor=C['text'], spaceAfter=4,   alignment=TA_JUSTIFY),
     'body_c':  S('bdc',fontSize=10, leading=15, textColor=C['text'], spaceAfter=4,   alignment=TA_CENTER),
     'sm':      S('sm', fontSize=9,  leading=13, textColor=C['muted'],spaceAfter=2),
-    'mono':    S('mn', fontName='Courier', fontSize=8, leading=12,
+    'mono':    S('mn', fontName='TH', fontSize=8.5, leading=13,
                  textColor=C['code_tx'], backColor=C['code_bg'],
                  leftIndent=10, rightIndent=10, spaceBefore=2, spaceAfter=2),
     'mono_lbl':S('ml', fontName='Courier', fontSize=8, leading=12, textColor=C['code_k']),
@@ -159,117 +165,117 @@ class FlowDiagram(Flowable):
         self.height = height
 
     def draw(self):
-        c   = self.canv
-        w   = self.width
-        h   = self.height
-        bh  = 1.1 * cm   # box height
-        bw  = 3.2 * cm   # box width (top row)
-        gap = 0.7 * cm   # gap between boxes
+        c  = self.canv
+        w  = self.width
+        h  = self.height
+        bh = 1.0 * cm
+        bw = 3.2 * cm
+        gap = 0.7 * cm
 
         # ── Top row: 3 pipeline stages ────────────────────────────────────────
         stages = [
-            ('ปิด\nSession',     C['navy'],    C['white']),
-            ('session-logger\n.ps1',C['blue'],   C['white']),
-            ('session-\nsummarizer.ps1', C['teal'], C['white']),
+            ('ปิด\nSession',              C['navy'], C['white']),
+            ('session-logger\n.ps1',      C['blue'], C['white']),
+            ('session-\nsummarizer.ps1',  C['teal'], C['white']),
         ]
-        total_top = len(stages) * bw + (len(stages)-1) * gap
+        total_top = 3 * bw + 2 * gap
         x_start   = (w - total_top) / 2
-        y_top     = h - bh - 0.4*cm
+        y_top     = h - bh - 0.5 * cm
 
-        boxes_x = []
+        cx_list = []
         for i, (label, bg, fg) in enumerate(stages):
             bx = x_start + i * (bw + gap)
-            boxes_x.append(bx + bw/2)
+            cx = bx + bw / 2
+            cx_list.append(cx)
             c.setFillColor(bg)
-            c.roundRect(bx, y_top, bw, bh, 6, fill=1, stroke=0)
+            c.roundRect(bx, y_top, bw, bh, 5, fill=1, stroke=0)
             c.setFillColor(fg)
             c.setFont('TH', 9)
             lines = label.split('\n')
             if len(lines) == 1:
-                c.drawCentredString(bx + bw/2, y_top + bh/2 - 5, lines[0])
+                c.drawCentredString(cx, y_top + bh / 2 - 4, lines[0])
             else:
-                c.drawCentredString(bx + bw/2, y_top + bh*0.65 - 5, lines[0])
-                c.drawCentredString(bx + bw/2, y_top + bh*0.28 - 5, lines[1])
+                c.drawCentredString(cx, y_top + bh * 0.67 - 4, lines[0])
+                c.drawCentredString(cx, y_top + bh * 0.27 - 4, lines[1])
 
         # ── Arrows between top-row boxes ──────────────────────────────────────
-        def arrow(x1, y, x2):
+        mid_y = y_top + bh / 2
+        for i in range(len(stages) - 1):
+            x1 = cx_list[i] + bw / 2
+            x2 = cx_list[i + 1] - bw / 2
             c.setStrokeColor(C['muted'])
             c.setFillColor(C['muted'])
             c.setLineWidth(1.2)
-            c.line(x1, y, x2 - 0.15*cm, y)
-            # Arrowhead
-            c.setLineWidth(0)
+            c.line(x1, mid_y, x2 - 0.18 * cm, mid_y)
             path = c.beginPath()
-            path.moveTo(x2, y)
-            path.lineTo(x2 - 0.25*cm, y + 0.12*cm)
-            path.lineTo(x2 - 0.25*cm, y - 0.12*cm)
+            path.moveTo(x2, mid_y)
+            path.lineTo(x2 - 0.22 * cm, mid_y + 0.1 * cm)
+            path.lineTo(x2 - 0.22 * cm, mid_y - 0.1 * cm)
             path.close()
+            c.setLineWidth(0)
             c.drawPath(path, fill=1, stroke=0)
 
-        mid_y = y_top + bh/2
-        for i in range(len(stages)-1):
-            x1 = boxes_x[i] + bw/2
-            x2 = boxes_x[i+1] - bw/2
-            arrow(x1, mid_y, x2)
-
-        # ── SessionEnd label ──────────────────────────────────────────────────
-        hook_x = (boxes_x[0] + boxes_x[1]) / 2
+        # "SessionEnd Hook" label — above arrow, between box 0 and box 1
+        hook_x = (cx_list[0] + cx_list[1]) / 2
         c.setFillColor(C['muted'])
-        c.setFont('TH', 7.5)
-        c.drawCentredString(hook_x, mid_y + 0.28*cm, 'SessionEnd Hook')
+        c.setFont('TH', 7)
+        c.drawCentredString(hook_x, y_top + bh + 0.1 * cm, 'SessionEnd Hook')
 
-        # ── Vertical drop from summarizer ─────────────────────────────────────
-        sum_x   = boxes_x[2]
-        drop_y1 = y_top
-        drop_y2 = drop_y1 - 1.1*cm
+        # ── Vertical drop from summarizer to branch point ─────────────────────
+        sum_x    = cx_list[2]
+        branch_y = y_top - 1.2 * cm      # well below top-row boxes
+
         c.setStrokeColor(C['teal'])
         c.setLineWidth(1.5)
-        c.line(sum_x, drop_y1, sum_x, drop_y2 + 0.15*cm)
+        c.line(sum_x, y_top, sum_x, branch_y)
 
-        # ── 3 output branches ─────────────────────────────────────────────────
-        out_bw  = 3.5 * cm
-        out_bh  = 1.4 * cm
+        # ── Output boxes: middle box anchored at sum_x ────────────────────────
+        out_bw  = 3.0 * cm
+        out_bh  = 1.3 * cm
         out_gap = 0.5 * cm
-        total_out = 3 * out_bw + 2 * out_gap
-        ox_start  = (w - total_out) / 2
-        oy        = drop_y2 - out_bh
+        # anchor: out_centers[1] = sum_x
+        ox_mid   = sum_x - out_bw / 2
+        ox_left  = ox_mid - out_bw - out_gap
+        ox_right = ox_mid + out_bw + out_gap
+        oy = branch_y - 0.4 * cm - out_bh
+
+        out_boxes = [ox_left, ox_mid, ox_right]
+        out_centers = [ox + out_bw / 2 for ox in out_boxes]
 
         outputs = [
-            ('session_log/\nYYYY-MM-DD.md', C['blue'],   C['lb'],   C['blue']),
-            ('recent_\ndigest.md',           C['green'],  C['lg'],   C['green']),
-            ('extracted_\nmistakes.md',      C['purple'], C['lp'],   C['purple']),
+            ('session_log/\nYYYY-MM-DD.md', C['blue'],   C['lb'], C['blue']),
+            ('recent_\ndigest.md',           C['green'],  C['lg'], C['green']),
+            ('extracted_\nmistakes.md',      C['purple'], C['lp'], C['purple']),
         ]
-        out_centers = []
         for i, (label, fg, bg, border) in enumerate(outputs):
-            ox = ox_start + i * (out_bw + out_gap)
-            cx = ox + out_bw/2
-            out_centers.append(cx)
+            ox = out_boxes[i]
+            cx = out_centers[i]
             c.setFillColor(bg)
-            c.roundRect(ox, oy, out_bw, out_bh, 6, fill=1, stroke=0)
+            c.roundRect(ox, oy, out_bw, out_bh, 5, fill=1, stroke=0)
             c.setStrokeColor(border)
-            c.setLineWidth(1.2)
-            c.roundRect(ox, oy, out_bw, out_bh, 6, fill=0, stroke=1)
+            c.setLineWidth(1.0)
+            c.roundRect(ox, oy, out_bw, out_bh, 5, fill=0, stroke=1)
             c.setFillColor(fg)
-            c.setFont('TH', 8.5)
+            c.setFont('TH', 8)
             lines = label.split('\n')
-            c.drawCentredString(cx, oy + out_bh*0.66 - 4, lines[0])
-            c.drawCentredString(cx, oy + out_bh*0.28 - 4, lines[1])
+            c.drawCentredString(cx, oy + out_bh * 0.65 - 3, lines[0])
+            c.drawCentredString(cx, oy + out_bh * 0.27 - 3, lines[1])
 
-        # Horizontal line connecting the 3 branches
-        branch_y = drop_y2
+        # ── Horizontal branch + drops to output boxes ─────────────────────────
         c.setStrokeColor(C['teal'])
         c.setLineWidth(1.5)
+        # horizontal spanning all 3 outputs
         c.line(out_centers[0], branch_y, out_centers[2], branch_y)
-
-        # Drop from branch line to each output box
+        # vertical drops from branch to each output box top
         for cx in out_centers:
-            c.line(cx, branch_y, cx, oy + out_bh + 0.05*cm)
-            # small arrowhead
+            c.line(cx, branch_y, cx, oy + out_bh + 0.05 * cm)
+            # arrowhead pointing down
             c.setFillColor(C['teal'])
+            c.setLineWidth(0)
             path = c.beginPath()
             path.moveTo(cx, oy + out_bh)
-            path.lineTo(cx - 0.12*cm, oy + out_bh + 0.2*cm)
-            path.lineTo(cx + 0.12*cm, oy + out_bh + 0.2*cm)
+            path.lineTo(cx - 0.1 * cm, oy + out_bh + 0.18 * cm)
+            path.lineTo(cx + 0.1 * cm, oy + out_bh + 0.18 * cm)
             path.close()
             c.drawPath(path, fill=1, stroke=0)
 
