@@ -1,154 +1,189 @@
 ---
 name: updating-plugins
-description: Updates all 4 Claude Code plugins to latest. karpathy-skills & document-skills use `claude plugin update`. 9arm-skills & mattpocock-skills do selective update (installed skills only) + report new uninstalled skills with last-updated date. Triggers on /update-plugins, /updating-plugins, "อัปเดต plugin", "อัปเดต skill", "update plugins".
+description: Updates all installed Claude Code plugins to latest. Discovers plugins dynamically from settings.json — works with any plugin set, no hardcoded names. Uses selective update per plugin source type. Triggers on /update-plugins, /updating-plugins, "อัปเดต plugin", "อัปเดต skill", "update plugins".
 allowed-tools: "Bash PowerShell Read"
 ---
 
-## Plugin inventory
+## Step 1 — Discover installed plugins
 
-| Plugin | Marketplace | Source | Marketplace dir |
-|--------|-------------|--------|-----------------|
-| `andrej-karpathy-skills` | `karpathy-skills` | GitHub (Claude-managed) | `~/.claude/plugins/marketplaces/karpathy-skills` |
-| `document-skills` | `anthropic-agent-skills` | GitHub (Claude-managed) | `~/.claude/plugins/marketplaces/anthropic-agent-skills` |
-| `9arm-skills` | `9arm-skills` | Local git repo → `https://github.com/thananon/9arm-skills` | `~/.claude/plugins/marketplaces/9arm-skills` |
-| `mattpocock-skills` | `mattpocock-skills` | Local dir (no git) → `https://github.com/mattpocock/skills` | `~/.claude/plugins/marketplaces/mattpocock-skills` |
+Read `~/.claude/settings.json` and parse the plugin config:
 
----
-
-## Step 1 — karpathy-skills & document-skills
-
-Run via Bash:
-```
-claude plugin update andrej-karpathy-skills@karpathy-skills
-claude plugin update document-skills@anthropic-agent-skills
-```
-Report success or error for each.
-
----
-
-## Step 2 — 9arm-skills (selective update)
-
-**Marketplace dir:** `~/.claude/plugins/marketplaces/9arm-skills`
-
-**Currently installed skills** (from `plugin.json`):
-- `skills/engineering/debug-mantra`
-- `skills/engineering/post-mortem`
-- `skills/engineering/scrutinize`
-- `skills/productivity/management-talk`
-
-### 2a. Fetch remote (no merge)
-```bash
-git -C ~/.claude/plugins/marketplaces/9arm-skills fetch origin
-```
-
-### 2b. Selective update — installed skills only
-For each path listed above:
-```bash
-git -C ~/.claude/plugins/marketplaces/9arm-skills checkout FETCH_HEAD -- <skill-path>
-```
-Do NOT do `git pull` — that would merge all remote content including new skills. After selective checkout, HEAD will differ from remote — this is expected.
-
-### 2c. Discover new/uninstalled skills
-List skill dirs from remote in the public buckets only (`engineering/`, `productivity/`, `misc/`):
-```bash
-git -C ~/.claude/plugins/marketplaces/9arm-skills ls-tree --name-only FETCH_HEAD skills/engineering/
-git -C ~/.claude/plugins/marketplaces/9arm-skills ls-tree --name-only FETCH_HEAD skills/productivity/
-git -C ~/.claude/plugins/marketplaces/9arm-skills ls-tree --name-only FETCH_HEAD skills/misc/ 2>/dev/null
-```
-Cross-reference with installed list. For each skill NOT in `plugin.json`, get last updated date:
-```bash
-git -C ~/.claude/plugins/marketplaces/9arm-skills log FETCH_HEAD --format="%cd" --date=short -1 -- <skill-path>
-```
-
-### 2d. Refresh plugin cache
-```bash
-claude plugin update 9arm-skills@9arm-skills
-```
-If command not found or fails, note "cache ไม่ได้ refresh — restart Claude Code เพื่อ apply"
-
----
-
-## Step 3 — mattpocock-skills (selective update)
-
-**Marketplace dir:** `~/.claude/plugins/marketplaces/mattpocock-skills`
-**Source repo:** `https://github.com/mattpocock/skills`
-
-**Currently installed skills** (from `plugin.json`):
-- `skills/engineering/diagnose`
-- `skills/engineering/grill-with-docs`
-- `skills/engineering/improve-codebase-architecture`
-- `skills/engineering/prototype`
-- `skills/engineering/tdd`
-- `skills/engineering/to-prd`
-- `skills/engineering/zoom-out`
-- `skills/productivity/caveman`
-- `skills/productivity/grill-me`
-- `skills/productivity/handoff`
-- `skills/productivity/write-a-skill`
-
-### 3a. Clone to temp dir
 ```powershell
-$tempDir = "$env:TEMP/mattpocock-update-$(Get-Random)"
-git clone --depth 1 https://github.com/mattpocock/skills $tempDir
+$s = Get-Content "$env:USERPROFILE\.claude\settings.json" -Raw | ConvertFrom-Json
+
+# All enabled plugins as "pluginId@marketplaceId"
+$enabled = $s.enabledPlugins.PSObject.Properties | Where-Object { $_.Value -eq $true }
+
+# Marketplace sources
+$markets = $s.extraKnownMarketplaces
 ```
 
-### 3b. Verify structure
-Check that `$tempDir/skills/` exists. If not → abort and warn: "repo structure อาจเปลี่ยน — ต้อง update manual"
+For each entry in `$enabled`, split on `@` to get `$pluginId` and `$marketplaceId`.
 
-### 3c. Selective copy — installed skills only
-For each installed skill path:
+Then look up `$markets.$marketplaceId.source` to get:
+- `$srcType` = `.source` field (`"github"` or `"directory"`)
+- `$srcPath` = `.path` field (directory type only)
+- `$srcRepo` = `.repo` field (github type only)
+
+---
+
+## Step 2 — Classify each marketplace and read installed skills
+
+For each marketplace discovered in Step 1:
+
+### If `$srcType == "github"` → **claude-managed**
+No skill list needed — `claude plugin update` handles everything.
+
+### If `$srcType == "directory"` → check git status
+
 ```powershell
-$src = "$tempDir/<skill-path>"
-$dst = "~/.claude/plugins/marketplaces/mattpocock-skills/<skill-path>"
+git -C $srcPath rev-parse --git-dir 2>&1 | Out-Null
+$hasGit = ($LASTEXITCODE -eq 0)
+
+$remotes = if ($hasGit) { git -C $srcPath remote } else { @() }
+$hasRemote = ($remotes.Count -gt 0)
+```
+
+Then read installed skills from `plugin.json`:
+
+```powershell
+$pj = Get-Content "$srcPath\.claude-plugin\plugin.json" -Raw | ConvertFrom-Json
+$installedSkills = $pj.skills | ForEach-Object { $_ -replace '^\./',''}
+# e.g. ["skills/engineering/diagnose", "skills/productivity/caveman", ...]
+```
+
+Classify:
+- `$hasGit && $hasRemote` → **git-selective**
+- `!$hasGit || !$hasRemote` → check if `"$srcPath\.clone-source"` exists:
+  - Exists → **clone-temp**, read URL from that file
+  - Not exists → **manual** (skip with warning)
+
+---
+
+## Step 3 — Run updates
+
+### claude-managed plugins
+
+```bash
+claude plugin update <pluginId>@<marketplaceId>
+```
+
+Run once per plugin in this category. Report success or error.
+
+---
+
+### git-selective plugins
+
+#### 3a. Fetch remote (no merge)
+```bash
+git -C <srcPath> fetch origin
+```
+
+#### 3b. Update installed skills only
+For each path in `$installedSkills`:
+```bash
+git -C <srcPath> checkout FETCH_HEAD -- <skill-path>
+```
+Do NOT `git pull` — that merges all remote content including new skills.
+
+#### 3c. Discover new skills
+List skill dirs from remote (public buckets only — `engineering/`, `productivity/`, `misc/`):
+```bash
+git -C <srcPath> ls-tree --name-only FETCH_HEAD skills/engineering/ 2>/dev/null
+git -C <srcPath> ls-tree --name-only FETCH_HEAD skills/productivity/ 2>/dev/null
+git -C <srcPath> ls-tree --name-only FETCH_HEAD skills/misc/ 2>/dev/null
+```
+Cross-reference with `$installedSkills`. For each skill NOT installed, get last updated date:
+```bash
+git -C <srcPath> log FETCH_HEAD --format="%cd" --date=short -1 -- <skill-path>
+```
+
+#### 3d. Refresh plugin cache
+```bash
+claude plugin update <pluginId>@<marketplaceId>
+```
+If fails → note "restart Claude Code เพื่อ apply"
+
+---
+
+### clone-temp plugins
+
+#### 3a. Read upstream URL
+```powershell
+$upstreamUrl = (Get-Content "$srcPath\.clone-source" -Raw).Trim()
+$tempDir = "$env:TEMP\plugin-update-$(Get-Random)"
+```
+
+#### 3b. Clone to temp
+```bash
+git clone --depth 1 <upstreamUrl> <tempDir>
+```
+Verify `<tempDir>/skills/` exists. If not → abort, warn "repo structure อาจเปลี่ยน ต้อง update manual"
+
+#### 3c. Selective copy — installed skills only
+For each path in `$installedSkills`:
+```powershell
+$src = "$tempDir\<skill-path>"
+$dst = "$srcPath\<skill-path>"
 if (Test-Path $src) {
-    Copy-Item -Recurse -Force $src (Split-Path $dst -Parent)
+    $dstParent = Split-Path $dst -Parent
+    if (-not (Test-Path $dstParent)) { New-Item -ItemType Directory -Force $dstParent | Out-Null }
+    Copy-Item -Recurse -Force $src $dstParent
 }
 ```
-Do NOT copy `.claude-plugin/` from temp — ใช้ metadata เดิม.
+Do NOT copy `.claude-plugin/` from temp — ใช้ metadata เดิมที่ $srcPath
 
-### 3d. Discover new/uninstalled skills
-List all skill dirs in `$tempDir/skills/engineering/` and `$tempDir/skills/productivity/` (or other buckets if present). Cross-reference with installed list. For each new skill, get last commit date from temp repo:
+#### 3d. Discover new skills
+List skill dirs in `$tempDir/skills/engineering/`, `$tempDir/skills/productivity/` (และ buckets อื่นถ้ามี).
+Cross-reference with `$installedSkills`. For each new skill, get last commit date:
 ```bash
-git -C $tempDir log --format="%cd" --date=short -1 -- <skill-path>
+git -C <tempDir> log --format="%cd" --date=short -1 -- <skill-path>
 ```
 
-### 3e. Cleanup temp
+#### 3e. Cleanup temp
 ```powershell
 Remove-Item -Recurse -Force $tempDir
 ```
 
-### 3f. Refresh plugin cache
+#### 3f. Refresh plugin cache
 ```bash
-claude plugin update mattpocock-skills@mattpocock-skills
+claude plugin update <pluginId>@<marketplaceId>
 ```
-If fails, note "restart Claude Code เพื่อ apply"
+If fails → note "restart Claude Code เพื่อ apply"
+
+---
+
+### manual plugins (no git, no .clone-source)
+
+Report: `⚠️ <pluginId>@<marketplaceId> — ข้าม (ไม่มี git remote และไม่มี .clone-source) ต้อง update manual`
 
 ---
 
 ## Step 4 — Final report
 
-Print summary:
-
 ```
 Plugin update summary
 ─────────────────────────────────────────
-✅ andrej-karpathy-skills  — updated
-✅ document-skills         — updated
-✅ 9arm-skills             — N skills updated
+✅ <pluginId>@<marketplaceId>  — updated   [claude-managed]
+✅ <pluginId>@<marketplaceId>  — N skills updated   [git-selective]
    🆕 New (not installed):
       - <skill-name>  last updated YYYY-MM-DD
-✅ mattpocock-skills       — N skills updated
+✅ <pluginId>@<marketplaceId>  — N skills updated   [clone-temp]
    🆕 New (not installed):
       - <skill-name>  last updated YYYY-MM-DD
+⚠️  <pluginId>@<marketplaceId>  — ข้าม ต้อง update manual
 
 ⚠️  Restart Claude Code เพื่อให้ plugin update มีผล
 ```
+
+If no new skills for a plugin → รายงาน "ไม่มี skill ใหม่" แทนการข้าม section นั้น
 
 ---
 
 ## Anti-patterns
 
-- ❌ `git pull` ตรงๆ ใน 9arm — จะ merge new skills เข้า plugin.json โดยไม่ตั้งใจ
-- ❌ Copy `.claude-plugin/marketplace.json` หรือ `plugin.json` จาก temp — metadata เดิมต้องคงไว้
-- ❌ นับ skills จาก `skills/personal/`, `skills/in-progress/`, `skills/deprecated/` ว่าเป็น "new" — buckets พวกนี้ไม่ expose
-- ❌ ข้าม step report ถ้าไม่มี new skills — ให้บอก "ไม่มี skill ใหม่" แทน
+- ❌ Hardcode plugin names หรือ skill lists ใน skill — ให้อ่านจาก `settings.json` และ `plugin.json` เสมอ
+- ❌ `git pull` ตรงๆ ใน git-selective repos — จะ merge new skills เข้า plugin.json โดยไม่ตั้งใจ
+- ❌ Copy `.claude-plugin/` จาก temp หรือ remote — metadata เดิมต้องคงไว้
+- ❌ นับ `skills/personal/`, `skills/in-progress/`, `skills/deprecated/` ว่าเป็น "new" — buckets พวกนี้ไม่ expose
+- ❌ ข้าม new-skills report ถ้าไม่มี new skills — ให้บอก "ไม่มี skill ใหม่" แทน
