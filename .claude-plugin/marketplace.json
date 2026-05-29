@@ -17,14 +17,43 @@
       "author": {
         "name": "zennnne"
       },
-      "keywords": [
-        "skills",
-        "agent",
-        "review",
-        "security",
-        "session",
-        "workflow"
-      ],
+      "keywords": ["skills", "agent", "review", "security", "session", "workflow"],
+      "category": "workflow"
+    },
+    {
+      "name": "andrej-karpathy-skills",
+      "source": "github:multica-ai/andrej-karpathy-skills",
+      "description": "Behavioral guidelines to reduce common LLM coding mistakes",
+      "version": "1.0.0",
+      "author": { "name": "forrestchang" },
+      "keywords": ["guidelines", "best-practices", "coding"],
+      "category": "workflow"
+    },
+    {
+      "name": "mattpocock-skills",
+      "source": "github:mattpocock/skills",
+      "description": "Matt Pocock's TypeScript and workflow skills",
+      "version": "1.0.0",
+      "author": { "name": "mattpocock" },
+      "keywords": ["typescript", "workflow"],
+      "category": "workflow"
+    },
+    {
+      "name": "anthropic-skills",
+      "source": "github:anthropics/skills",
+      "description": "Anthropic official example skills",
+      "version": "1.0.0",
+      "author": { "name": "anthropics" },
+      "keywords": ["official", "document", "api"],
+      "category": "workflow"
+    },
+    {
+      "name": "9arm-skills",
+      "source": "github:thananon/9arm-skills",
+      "description": "9arm's skill collection",
+      "version": "1.0.0",
+      "author": { "name": "thananon" },
+      "keywords": ["workflow", "debug"],
       "category": "workflow"
     }
   ]
