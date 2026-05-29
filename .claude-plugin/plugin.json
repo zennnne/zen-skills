@@ -22,6 +22,7 @@
     "./skills/session-index",
     "./skills/session-summary",
     "./skills/updating-plugins",
-    "./skills/setup-session-log"
+    "./skills/setup-session-log",
+    "./skills/wahahaha"
   ]
 }

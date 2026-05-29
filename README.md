@@ -21,6 +21,7 @@ Zen's personal Claude Code skill collection.
 | `session-summary` | Backfill daily session summaries |
 | `updating-plugins` | Update Claude Code plugins |
 | `setup-session-log` | Install Zen's auto session logging system on a new machine |
+| `wahahaha` | **Onboarding wizard** — run once on a new machine to set everything up |
 
 ## Install
 
