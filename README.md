@@ -23,6 +23,14 @@ Zen's personal Claude Code skill collection.
 
 ## Install
 
-```bash
-/install-plugin github:zennnne/zen-skills
+> **Note:** This is a private repo — ต้อง `gh auth login` ก่อนนะ
+
+**1. Add marketplace**
+```
+/plugin marketplace add zennnne/zen-skills
+```
+
+**2. Install plugin**
+```
+/plugin install zen-skills@zen-skills
 ```
