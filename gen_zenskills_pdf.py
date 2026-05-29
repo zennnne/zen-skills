@@ -1007,12 +1007,17 @@ def build_install_page():
     ]
     rows = []
     for emoji, name, desc in wahaha_steps:
+        inner = Table([
+            [Paragraph(f'<b>{name}</b>', ParagraphStyle('wn', fontName='TH', fontSize=10.5, leading=15, textColor=C['blue']))],
+            [Paragraph(desc, ParagraphStyle('wd', fontName='TH', fontSize=9, leading=13, textColor=C['text']))],
+        ], colWidths=[CW - 2.2*cm - 24])
+        inner.setStyle(TableStyle([
+            ('TOPPADDING', (0,0),(-1,-1), 1), ('BOTTOMPADDING', (0,0),(-1,-1), 1),
+            ('LEFTPADDING', (0,0),(-1,-1), 0), ('RIGHTPADDING', (0,0),(-1,-1), 0),
+        ]))
         rows.append([
             Paragraph(me(emoji), ParagraphStyle('we', fontName='Emoji', fontSize=16, leading=20, alignment=TA_CENTER)),
-            Table([[
-                Paragraph(f'<b>{name}</b>', ParagraphStyle('wn', fontName='TH', fontSize=10.5, leading=15, textColor=C['blue'])),
-                Paragraph(desc, ParagraphStyle('wd', fontName='TH', fontSize=9, leading=13, textColor=C['text'])),
-            ]], colWidths=[CW - 2.2*cm - 30])
+            inner,
         ])
     wt = Table(rows, colWidths=[2.2*cm, CW - 2.2*cm])
     wt.setStyle(TableStyle([
@@ -1084,6 +1089,7 @@ def build_pdf(output_path):
     print(f'PDF saved: {output_path}')
 
 if __name__ == '__main__':
-    import sys, io
+    import sys, io, os
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    build_pdf(r'C:\Users\User\OneDrive\Desktop\zen-skills-catalog.pdf')
+    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zen-skills-catalog.pdf')
+    build_pdf(out)
