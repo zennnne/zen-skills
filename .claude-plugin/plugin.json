@@ -21,6 +21,7 @@
     "./skills/reviewing-code",
     "./skills/session-index",
     "./skills/session-summary",
-    "./skills/updating-plugins"
+    "./skills/updating-plugins",
+    "./skills/setup-session-log"
   ]
 }

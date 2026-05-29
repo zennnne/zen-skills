@@ -20,6 +20,7 @@ Zen's personal Claude Code skill collection.
 | `session-index` | Generate monthly session index |
 | `session-summary` | Backfill daily session summaries |
 | `updating-plugins` | Update Claude Code plugins |
+| `setup-session-log` | Install Zen's auto session logging system on a new machine |
 
 ## Install
 
