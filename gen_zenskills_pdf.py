@@ -463,8 +463,8 @@ SKILLS = {
     dict(
       name='wahahaha', tier='A', type_emoji='🔧', type_name='Utility',
       cmd='/wahahaha',
-      what='Wizard ตั้งค่าทุกอย่างในครั้งเดียว — ถามทีละขั้นว่าอยากได้ session log, karpathy, mattpocock, document-skills, 9arm ไหม ตอบใช่/ไม่แล้วมันจัดการให้หมด ใช้ครั้งเดียวพอต่อเครื่อง',
-      how_to_use='รัน /wahahaha ทันทีหลัง install zen-skills มันจะถาม: (1) Session log, (2) andrej-karpathy-skills, (3) mattpocock-skills, (4) document-skills, (5) 9arm-skills ตอบใช่/ไม่ทีละตัว',
+      what='Wizard ตั้งค่าทุกอย่างในครั้งเดียว — ถามทีละ plugin ว่าอยากได้ไหม ตอบใช่/ไม่แล้วมันจัดการให้หมดเลย ไม่ต้องจำคำสั่ง install เอง ใช้ครั้งเดียวพอต่อเครื่อง',
+      how_to_use='รัน /wahahaha ทันทีหลัง install zen-skills — มันจะถามทีละตัว: session log, karpathy, mattpocock, document-skills, 9arm ตอบใช่/ไม่ทีละอัน',
       when='ครั้งแรกบนเครื่องใหม่หรือหลัง format — ประหยัดเวลาแทนที่จะจำคำสั่ง /plugin install ทั้งหมด',
       careers='Everyone',
     ),
