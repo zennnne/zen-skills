@@ -1,0 +1,26 @@
+{
+  "name": "zen-skills",
+  "description": "Zen's personal Claude Code skill collection — agent design, code review, security auditing, session logging, skill crafting, and more",
+  "version": "1.0.0",
+  "author": {
+    "name": "zennnne"
+  },
+  "license": "MIT",
+  "keywords": ["skills", "agent", "review", "security", "session", "workflow"],
+  "skills": [
+    "./skills/applying-3-act-structure",
+    "./skills/audit-skills",
+    "./skills/auditing-security",
+    "./skills/cleaning-sessions",
+    "./skills/craft-skill",
+    "./skills/crafting-skills-deeply",
+    "./skills/designing-agent-roles",
+    "./skills/designing-subagent-systems",
+    "./skills/extracting-youtube-transcript",
+    "./skills/harvest-insights",
+    "./skills/reviewing-code",
+    "./skills/session-index",
+    "./skills/session-summary",
+    "./skills/updating-plugins"
+  ]
+}
